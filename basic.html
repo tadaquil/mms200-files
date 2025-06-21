@@ -1,0 +1,99 @@
+<!doctype HTML>
+<html>
+
+<head>
+  <!-- A-Frame and AR.js -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.loaders.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    :root {
+      --btn-size: 120px;
+    }
+
+    #startBtn {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--btn-size);
+      height: var(--btn-size);
+      cursor: pointer;
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body style='margin: 0px; overflow: hidden;'>
+  <img id="startBtn" src="models/marker/start.png" alt="Start Button" />
+
+  <a-scene embedded arjs renderer="logarithmicDepthBuffer: true; colorManagement: true; physicallyCorrectLights: true;">
+    <a-assets>
+      <a-asset-item id="model" src="models/marker/waving.glb"></a-asset-item>
+    </a-assets>
+
+    <!-- Add better lighting -->
+    <a-entity light="type: ambient; color: #ffffff; intensity: 1.0"></a-entity>
+    <a-entity light="type: directional; color: #ffffff; intensity: 1.0" position="1 2 1"></a-entity>
+    <a-entity light="type: directional; color: #ffffff; intensity: 0.5" position="-1 2 -1"></a-entity>
+
+    <a-marker id='marker' type='pattern' url='models/marker/huna-marker1.patt'>
+      <a-entity id="modelEntity" gltf-model="#model" position="0 0 0" scale="0.7 0.5 0.5" rotation="-90 0 0"
+        animation-mixer shadow="cast: true; receive: false" visible="false">
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const marker = document.querySelector('#marker');
+    const model = document.querySelector('#modelEntity');
+    const startBtn = document.querySelector('#startBtn');
+
+    let markerVisible = false;
+    let modelActivated = false;
+    let hideTimeout = null;
+
+    marker.addEventListener('markerFound', () => {
+      markerVisible = true;
+
+      if (!modelActivated) {
+        startBtn.style.display = 'block';
+      } else {
+        model.setAttribute('visible', 'true');
+        if (hideTimeout) clearTimeout(hideTimeout);
+      }
+    });
+
+    marker.addEventListener('markerLost', () => {
+      markerVisible = false;
+
+      if (modelActivated) {
+        hideTimeout = setTimeout(() => {
+          if (!markerVisible) {
+            model.setAttribute('visible', 'false');
+          }
+        }, 500);
+      } else {
+        startBtn.style.display = 'none';
+      }
+    });
+
+    startBtn.addEventListener('click', () => {
+      if (markerVisible) {
+        model.setAttribute('visible', 'true');
+        startBtn.style.display = 'none';
+        modelActivated = true;
+      }
+    });
+  </script>
+</body>
+
+</html>
